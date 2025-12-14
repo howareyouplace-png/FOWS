@@ -447,7 +447,9 @@
       seg.style.maxWidth = MAX_SEG_W + 'px';
       
       // Add title tooltip with full player list for mobile long-press
-      seg.title = `${team.building_name}\n${team.players.join('\n')}`;
+      if (team.building_name && Array.isArray(team.players) && team.players.length > 0) {
+        seg.title = `${team.building_name}\n${team.players.join('\n')}`;
+      }
 
       const title = document.createElement('div');
       title.className = 'team-title';
@@ -466,7 +468,6 @@
         const e = document.createElement('div');
         e.className = 'team-player-name';
         e.textContent = pn;
-        Object.assign(e.style, { padding:'4px 8px', borderRadius:'8px', background:'rgba(0,0,0,0.03)', whiteSpace:'normal', wordBreak:'break-word', overflow:'visible', textOverflow:'clip', width:'100%', textAlign:'center', lineHeight:'1.4' });
         playersWrap.appendChild(e);
       });
       if (team.players.length > visible.length){
