@@ -463,7 +463,7 @@
         const e = document.createElement('div');
         e.className = 'team-player-name';
         e.textContent = pn;
-        Object.assign(e.style, { padding:'4px 8px', borderRadius:'8px', background:'rgba(0,0,0,0.03)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', width:'calc(100% - 8px)', textAlign:'center' });
+        Object.assign(e.style, { padding:'4px 8px', borderRadius:'8px', background:'rgba(0,0,0,0.03)', width:'calc(100% - 8px)', textAlign:'center' });
         playersWrap.appendChild(e);
       });
       if (team.players.length > visible.length){
