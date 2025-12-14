@@ -1,0 +1,46 @@
+/* Admin panel styles (full file) */
+
+.admin-panel{
+  position: fixed;
+  right: 12px;
+  top: 12px;
+  width: 360px;
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  border: 1px solid #e2e6ee;
+  z-index: 20000;
+  padding: 12px;
+  font-family: system-ui, Arial, "Segoe UI", Tahoma;
+  font-size: 13px;
+}
+
+.admin-panel h3{ margin:6px 0 8px; font-size:14px; }
+.admin-section{ margin-bottom:12px; padding:8px; border-radius:8px; background:#fafbfc; border:1px solid #eef2f6; }
+
+.list{
+  display:flex; flex-direction:column; gap:6px;
+}
+.item{
+  display:flex; align-items:center; gap:8px; padding:6px 8px; background:#fff; border:1px solid #e6e9ee; border-radius:6px;
+}
+.item .grab{ cursor:grab; padding:6px; background:#f5f7fa; border-radius:6px; font-weight:700; }
+.item.dragging{ opacity:0.6; transform:scale(0.995); }
+
+.btn{ display:inline-block; padding:6px 10px; border-radius:6px; border:1px solid #d7dde8; background:#f7f9fb; cursor:pointer; font-size:13px; }
+.btn.primary{ background:#2563eb; color:#fff; border-color:#1f4fd8; }
+.btn-danger{ background:#ff4d4d; color:#fff; border-color:#e03b3b; }
+
+.small-input{ width:60px; padding:6px; border:1px solid #d7dde8; border-radius:6px; font-size:13px; }
+
+.label{ font-weight:600; color:#334155; margin-bottom:6px; display:block; }
+
+.drop-target{ outline:2px dashed rgba(37,99,235,0.6); box-shadow:0 4px 14px rgba(37,99,235,0.06) inset; }
+
+.stage-notes{ font-size:13px; color:#0f172a; padding:6px; background:#fff; border-radius:6px; border:1px dashed #e6eefc; }
+
+.player-list .player{ cursor:grab; }
+
+.settings-row{ display:flex; gap:8px; align-items:center; margin-bottom:8px; }

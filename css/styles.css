@@ -1,0 +1,326 @@
+:root{
+  --canvas-size: 1200px; /* reduced from 1400 to shrink large empty margins */
+  --play-width: 1000px;
+  --play-height: 1000px;
+  --tile-width: 80px;
+  --tile-height: 40px;
+  --building-size: var(--tile-width);
+  --bg-color: #8e6e7b;
+  --grid-stroke: rgba(0,0,0,0.32);
+  --grid-fill: rgba(255,255,255,0.03);
+  --tile-label-color: rgba(255,255,255,0.95);
+  --popup-z: 11000;
+  --coords-z: 12000;
+
+  /* players panel tuning */
+  --players-panel-width: 220px;
+  --players-panel-bg: rgba(255,255,255,0.86);
+  --players-panel-bg-dense: rgba(255,255,255,0.94);
+  --players-toggle-bg: rgba(255,255,255,0.96);
+  --connector-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --panel-border-color: rgba(230,233,238,0.9);
+  --panel-radius: 8px;
+
+  /* visual tuning */
+  --connector-stroke-width: 2.8;
+  --rect-stroke-width: 1.4;
+  --anchor-radius: 2.8;
+  --target-radius: 4.4;
+
+  /* controls */
+  --controls-gap: 12px;
+  --controls-padding: 8px;
+
+  /* typography */
+  --muted: rgba(0,0,0,0.56);
+  --stage-time-bg: rgba(255,255,255,0.06);
+}
+
+/* ---------------- Base layout ---------------- */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body{
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  direction: ltr;
+  margin: 8px;
+  background: #f5f6f8;
+  color: #222;
+  text-align: center;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------------- Modern controls (top) ---------------- */
+.controls{
+  display:flex;
+  gap:var(--controls-gap);
+  align-items:center;
+  justify-content:center;
+  margin: 6px auto 12px;
+  padding: var(--controls-padding);
+  max-width: 1200px;
+  width: calc(100% - 32px);
+}
+.controls-left, .controls-center, .controls-right {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.controls-left { flex:0 0 auto; }
+.controls-center { flex:1 1 auto; justify-content:center; flex-direction:column; align-items:stretch; gap:8px; }
+.controls-right { flex:0 0 auto; }
+
+/* Legion select */
+#modernLegionSelect{
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  min-width: 160px;
+  font-weight:600;
+  color: #111;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* modern small buttons */
+.modern-btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px 10px;
+  border-radius:8px;
+  border:1px solid rgba(0,0,0,0.08);
+  background:#fff;
+  cursor:pointer;
+  font-weight:700;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+.modern-btn:hover{ transform: translateY(-2px); }
+
+/* ---------------- Stages bar & segments ---------------- */
+#stagesBar{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  padding:8px;
+  border-radius:12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  overflow-x:auto;
+  -webkit-overflow-scrolling: touch;
+}
+#stagesBar::-webkit-scrollbar{ height:8px; }
+#stagesBar::-webkit-scrollbar-thumb{ background: rgba(0,0,0,0.06); border-radius:6px; }
+
+/* stage segment (vertical layout: label then time) */
+.stage-segment{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:8px 14px;
+  border-radius:10px;
+  color:#fff;
+  font-weight:800;
+  min-width:92px;
+  text-align:center;
+  cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+.stage-segment:hover{ transform: translateY(-4px); box-shadow: 0 14px 36px rgba(0,0,0,0.12); }
+.stage-segment.inactive{ opacity:.92; filter: saturate(.95); }
+.stage-segment.active{ outline: 3px solid rgba(255,255,255,0.08); box-shadow: 0 20px 56px rgba(0,0,0,0.18); }
+
+/* stage label & time below it */
+.stage-label{ font-size:14px; line-height:1.05; padding:0 2px; }
+.stage-time{
+  font-size:12px;
+  opacity:0.95;
+  margin-top:8px;
+  font-weight:700;
+  color: rgba(255,255,255,0.95);
+  background: var(--stage-time-bg);
+  padding:4px 8px;
+  border-radius:6px;
+  min-width:40px;
+  text-align:center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06) inset;
+}
+
+/* placeholder for missing time: visible dashed/neutral look */
+.stage-time.empty{
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.85);
+  opacity:0.9;
+}
+
+/* ---------------- Slider (compact row) ---------------- */
+input[type="range"]#modernStageRange{
+  -webkit-appearance:none;
+  appearance:none;
+  height:8px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 8px;
+  outline:none;
+  width:100%;
+}
+input[type="range"]#modernStageRange::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  appearance:none;
+  width:16px;
+  height:16px;
+  background:#1776ff;
+  border-radius:50%;
+  box-shadow:0 4px 12px rgba(23,118,255,0.22);
+  border: 2px solid #fff;
+  margin-top: -4px;
+}
+input[type="range"]#modernStageRange::-moz-range-thumb{
+  width:16px; height:16px; background:#1776ff; border-radius:50%; border:2px solid #fff; box-shadow:0 4px 12px rgba(23,118,255,0.22);
+}
+
+/* make slider thicker/tappable on touch devices */
+@media (pointer:coarse){
+  input[type="range"]#modernStageRange{ height:12px; }
+  input[type="range"]#modernStageRange::-webkit-slider-thumb{ width:20px; height:20px; margin-top:-6px; }
+}
+
+/* ---------------- Map wrapper ---------------- */
+.map-wrapper{
+  width: min(var(--canvas-size), 100%);
+  height: min(var(--canvas-size), 86vh);
+  margin: 8px auto;
+  position: relative;
+  border-radius: 10px;
+  background: var(--bg-color);
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* Decorative play area */
+.map-playarea {
+  position: absolute;
+  width: var(--play-width);
+  height: var(--play-height);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  border-radius: 8px;
+  outline: 1px solid rgba(0,0,0,0.04);
+  z-index: 1000;
+}
+
+/* Map container */
+#map { width:100%; height:100%; position:relative; }
+
+/* Tile / diamond */
+.iso-grid-line{
+  position:absolute; transform:translate(-50%,-50%); pointer-events:none; z-index:6500;
+  width: var(--tile-width); height: var(--tile-height); display:flex; align-items:center; justify-content:center;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  background: var(--grid-fill); border: 2px solid var(--grid-stroke);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06), inset 0 2px 10px rgba(255,255,255,0.02);
+  color: var(--tile-label-color); font-size: 12px; font-weight:600; text-shadow: 0 1px 1px rgba(0,0,0,0.35);
+}
+
+/* Building */
+.building { position:absolute; transform-origin: bottom center; transform: translate(-50%,-100%); z-index:7000;
+  width: var(--building-size); height: var(--building-size); display:flex; align-items:flex-end; justify-content:center;
+  cursor:pointer; pointer-events:auto; overflow:visible; background:transparent; }
+.building img{ position:absolute; left:50%; transform:translateX(-50%); bottom:0; width:100%; height:auto; max-height:200%; display:block; pointer-events:auto; image-rendering: -webkit-optimize-contrast; }
+.building.contain{ overflow:hidden; transform: translate(-50%,-50%); }
+.building.contain img{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:100%; height:100%; object-fit:contain; }
+
+/* Player name badge */
+.player-names {
+  position: absolute; left:50%; transform:translateX(-50%);
+  top: calc(-1 * (var(--tile-height) / 2) - 8px);
+  background: rgba(255,255,255,0.98); padding:6px 8px; border-radius:8px; box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  font-size:13px; white-space:normal; pointer-events:auto; z-index:9000; min-width:36px; text-align:center;
+}
+
+/* hide badges with players-open */
+.map-wrapper.players-open .player-names { display:none !important; }
+
+/* tile overlay */
+.tile-overlay { position:absolute; transform:translate(-50%,-50%); pointer-events:none; z-index:7900; display:flex; align-items:center; justify-content:center; width:var(--tile-width); height:var(--tile-height); clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); background: rgba(255,255,255,0.06); border: 3px solid rgba(255,255,255,0.18); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+
+/* popup */
+.popup { position:absolute; min-width:220px; max-width:320px; background:#fff; border:1px solid rgba(0,0,0,0.12); padding:12px; border-radius:6px; box-shadow:0 8px 30px rgba(0,0,0,0.18); z-index:var(--popup-z); display:none; pointer-events:auto; }
+.popup .close{ float:right; cursor:pointer; font-weight:bold; }
+
+/* coords panel */
+.map-coords{ position:absolute; top:12px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.78); color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; z-index:var(--coords-z); display:none; min-width:220px; box-shadow:0 6px 20px rgba(0,0,0,0.35); }
+.map-coords .coords-actions{ margin-top:8px; display:flex; gap:8px; justify-content:center; }
+
+/* click marker */
+.map-click-marker{ position:absolute; width:10px; height:10px; border-radius:50%; background:rgba(255,80,80,0.95); transform:translate(-50%,-50%); z-index:12000; display:none; box-shadow:0 0 8px rgba(255,80,80,0.7); }
+
+/* highlighted building */
+.building.highlighted{ outline:3px solid rgba(37,99,235,0.9); box-shadow:0 8px 24px rgba(37,99,235,0.12); }
+
+/* Players panel (default right; JS can toggle .panel-left) */
+#playersPanel{ position:absolute; right:12px; top:12px; width:var(--players-panel-width); max-height:calc(100% - 24px); overflow:auto; background:var(--players-panel-bg); border:1px solid var(--panel-border-color); border-radius:var(--panel-radius); padding:6px; z-index:25000; box-shadow:0 6px 18px rgba(0,0,0,0.08); font-size:13px; touch-action:none; user-select:none; }
+#playersPanel.panel-left{ right:auto; left:12px; }
+
+/* drag handle inserted by JS */
+.players-drag-handle{ cursor:grab; padding:6px 8px; font-weight:700; text-align:center; border-radius:calc(var(--panel-radius)-2px) calc(var(--panel-radius)-2px 0 0); margin:-6px -6px 8px -6px; background:rgba(255,255,255,0.02); }
+#playersPanel.players-dragging .players-drag-handle{ cursor:grabbing; }
+
+/* rows */
+.players-row{ display:flex; gap:8px; align-items:center; justify-content:space-between; padding:6px; border-bottom:1px dashed rgba(0,0,0,0.06); }
+.players-row .pname{ flex:1; font-size:13px; word-break:break-word; padding-right:6px; }
+
+/* connectors overlay */
+#connectorsSvg{ position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:26000; }
+#connectorsSvg path{ stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 2px 8px rgba(0,0,0,0.06)); transition:opacity 160ms ease; }
+#connectorsSvg rect{ opacity:0.98; }
+#connectorsSvg circle{ stroke:rgba(255,255,255,0.9); stroke-width:0.6; }
+
+/* players toggle if needed */
+.players-toggle{ position:absolute; right:12px; top:4px; z-index:25010; background:var(--players-toggle-bg); border:1px solid rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:13px; cursor:pointer; box-shadow:var(--connector-shadow); }
+
+/* subtle scrollbar */
+#playersPanel::-webkit-scrollbar{ width:10px; } 
+#playersPanel::-webkit-scrollbar-thumb{ background:rgba(0,0,0,0.12); border-radius:6px; } 
+#playersPanel::-webkit-scrollbar-track{ background:rgba(255,255,255,0.02); }
+
+/* admin/editor */
+.admin-section{ max-width:1100px; margin:18px auto; background:#fff; padding:12px; border-radius:8px; border:1px solid #e0e4ea; }
+textarea.json-editor{ width:100%; height:420px; font-family:monospace; font-size:13px; }
+
+/* stacking */
+.iso-grid-line{ z-index:6500; }
+.building{ z-index:7000; }
+.tile-overlay{ z-index:7900; }
+.player-names{ z-index:9000; }
+.popup{ z-index:var(--popup-z); }
+.map-coords{ z-index:var(--coords-z); }
+.map-click-marker{ z-index:12010; }
+
+/* responsive */
+@media (max-width:900px){
+  .controls{ flex-direction:column; align-items:stretch; gap:8px; padding:8px; }
+  .controls-left, .controls-right{ justify-content:center; }
+  #stagesBar .stage-segment{ min-width:72px; padding:6px 8px; font-size:13px; }
+  #modernLegionSelect{ min-width:140px; }
+  /* reduce shadows & hide stage-time only on very small screens to avoid clutter */
+  @media (max-width:420px) {
+    .stage-time{ display:none; }
+  }
+  .stage-segment{ box-shadow: 0 6px 14px rgba(0,0,0,0.04); }
+}
+
+/* small-screen touch improvements */
+@media (pointer:coarse){
+  .modern-btn{ padding:10px 12px; }
+  .stage-segment{ padding:10px 14px; min-width:80px; }
+}

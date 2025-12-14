@@ -1,0 +1,380 @@
+{
+    "buildings": [
+        {
+            "id": "IMPERIAL",
+            "name_ar": "الإمبراطوري",
+            "png_path": "assets\/imperial.png",
+            "coords_x": 50,
+            "coords_y": 50,
+            "points_first_alliance": 9000,
+            "points_occ_alliance": 1800,
+            "points_first_personal": 4500,
+            "points_occ_personal": 900,
+            "bonus_ar": "",
+            "gridX": 0.5100000000000000088817841970012523233890533447265625,
+            "gridY": -0.5100000000000000088817841970012523233890533447265625,
+            "img_scale": 1.1999999999999999555910790149937383830547332763671875,
+            "img_offset_y": 0
+        },
+        {
+            "id": "BOILER",
+            "name_ar": "مرجل",
+            "png_path": "assets\/boiler.png",
+            "coords_x": 30,
+            "coords_y": 15,
+            "points_first_alliance": 4000,
+            "points_occ_alliance": 800,
+            "points_first_personal": 2000,
+            "points_occ_personal": 400,
+            "bonus_ar": "",
+            "gridX": -3,
+            "gridY": -1,
+            "img_scale": 1,
+            "img_offset_y": 0
+        },
+        {
+            "id": "REPAIR_A",
+            "name_ar": "إصلاح (أعلى يمين)",
+            "png_path": "assets\/repair_a.png",
+            "coords_x": 70,
+            "coords_y": 20,
+            "points_first_alliance": 2500,
+            "points_occ_alliance": 500,
+            "points_first_personal": 1250,
+            "points_occ_personal": 250,
+            "bonus_ar": "",
+            "gridX": -1,
+            "gridY": 2
+        },
+        {
+            "id": "TRANSIT_STATION",
+            "name_ar": "محطة عبور",
+            "png_path": "assets\/transit.png",
+            "coords_x": 70,
+            "coords_y": 85,
+            "points_first_alliance": 3000,
+            "points_occ_alliance": 600,
+            "points_first_personal": 1500,
+            "points_occ_personal": 300,
+            "bonus_ar": "",
+            "gridX": 3,
+            "gridY": 1
+        },
+        {
+            "id": "MUNITION",
+            "name_ar": "ذخيرة",
+            "png_path": "assets\/munition.png",
+            "coords_x": 30,
+            "coords_y": 80,
+            "points_first_alliance": 2000,
+            "points_occ_alliance": 400,
+            "points_first_personal": 1000,
+            "points_occ_personal": 200,
+            "bonus_ar": "",
+            "gridX": 1.54000000000000003552713678800500929355621337890625,
+            "gridY": 0.54000000000000003552713678800500929355621337890625
+        },
+        {
+            "id": "PROTOTYPE_A",
+            "name_ar": "نموذج أولي (يسار)",
+            "png_path": "assets\/prototype_a.png",
+            "coords_x": 15,
+            "coords_y": 45,
+            "points_first_alliance": 3500,
+            "points_occ_alliance": 700,
+            "points_first_personal": 1750,
+            "points_occ_personal": 350,
+            "bonus_ar": "",
+            "gridX": -2,
+            "gridY": 1
+        },
+        {
+            "id": "MERCENARY",
+            "name_ar": "مرتزقة",
+            "png_path": "assets\/mercenary.png",
+            "coords_x": 50,
+            "coords_y": 30,
+            "points_first_alliance": 2200,
+            "points_occ_alliance": 440,
+            "points_first_personal": 1100,
+            "points_occ_personal": 220,
+            "bonus_ar": "",
+            "gridX": -0.39000000000000001332267629550187848508358001708984375,
+            "gridY": -1.37000000000000010658141036401502788066864013671875
+        },
+        {
+            "id": "REPAIR_B",
+            "name_ar": "إصلاح (أسفل يسار)",
+            "png_path": "assets\/repair_b.png",
+            "coords_x": 15,
+            "coords_y": 70,
+            "points_first_alliance": 2500,
+            "points_occ_alliance": 500,
+            "points_first_personal": 1250,
+            "points_occ_personal": 250,
+            "bonus_ar": "",
+            "gridX": 2,
+            "gridY": 3
+        },
+        {
+            "id": "REPAIR_C",
+            "name_ar": "إصلاح (يمين)",
+            "png_path": "assets\/repair_c.png",
+            "coords_x": 85,
+            "coords_y": 45,
+            "points_first_alliance": 2500,
+            "points_occ_alliance": 500,
+            "points_first_personal": 1250,
+            "points_occ_personal": 250,
+            "bonus_ar": "",
+            "gridX": 2.2400000000000002131628207280300557613372802734375,
+            "gridY": -1.8600000000000000976996261670137755572795867919921875
+        },
+        {
+            "id": "PROTOTYPE_B",
+            "name_ar": "نموذج أولي (يمين)",
+            "png_path": "assets\/prototype_b.png",
+            "coords_x": 85,
+            "coords_y": 70,
+            "points_first_alliance": 3500,
+            "points_occ_alliance": 700,
+            "points_first_personal": 1750,
+            "points_occ_personal": 350,
+            "bonus_ar": "",
+            "gridX": 3,
+            "gridY": -1
+        },
+        {
+            "id": "WORKSHOP1",
+            "name_ar": "WORKSHOP",
+            "png_path": "assets\/WORKSHOP.png",
+            "gridX": -2,
+            "gridY": 0,
+            "img_scale": 0.5,
+            "img_offset_y": 0
+        },
+        {
+            "id": "WORKSHOP2",
+            "name_ar": "WORKSHOP",
+            "png_path": "assets\/WORKSHOP.png",
+            "gridX": -3,
+            "gridY": 0
+        },
+        {
+            "id": "WORKSHOP3",
+            "name_ar": "WORKSHOP",
+            "png_path": "assets\/WORKSHOP.png",
+            "gridX": 0,
+            "gridY": 2
+        },
+        {
+            "id": "WORKSHOP4",
+            "name_ar": "WORKSHOP",
+            "png_path": "assets\/WORKSHOP.png",
+            "gridX": 1,
+            "gridY": 2
+        },
+        {
+            "id": "WORKSHOP5",
+            "name_ar": "WORKSHOP",
+            "png_path": "assets\/WORKSHOP.png",
+            "gridX": 4,
+            "gridY": 0
+        },
+        {
+            "id": "WORKSHOP6",
+            "name_ar": "WORKSHOP",
+            "png_path": "assets\/WORKSHOP.png",
+            "gridX": 3,
+            "gridY": 0
+        },
+        {
+            "id": "WORKSHOP7",
+            "name_ar": "WORKSHOP",
+            "png_path": "assets\/WORKSHOP.png",
+            "gridX": 1.399999999999999911182158029987476766109466552734375,
+            "gridY": -1.6599999999999999200639422269887290894985198974609375
+        },
+        {
+            "id": "WORKSHOP8",
+            "name_ar": "WORKSHOP",
+            "png_path": "assets\/WORKSHOP.png",
+            "gridX": 0.58999999999999996891375531049561686813831329345703125,
+            "gridY": -1.6100000000000000976996261670137755572795867919921875
+        }
+    ],
+    "legion_data": [
+        {
+            "legion_id": "Legion 1",
+            "all_players": [
+                "Player A",
+                "Player B",
+                "Player C",
+                "TEST",
+                "TESTTEST",
+                "TESTTESTTEST",
+                "assdddd",
+                "aaddddwwww",
+                "asddddaas",
+                "zzxzxxx"
+            ],
+            "stages": [
+                {
+                    "stage_number": 1,
+                    "time_start": "10:00:00",
+                    "assignments": [
+                        {
+                            "building_id": "IMPERIAL",
+                            "player_names": [
+                                "Player A",
+                                "Player B",
+                                "Player C",
+                                "TEST",
+                                "TESTTEST",
+                                "TESTTESTTEST",
+                                "assdddd",
+                                "aaddddwwww",
+                                "asddddaas",
+                                "zzxzxxx"
+                            ]
+                        },
+                        {
+                            "building_id": "BOILER",
+                            "player_names": [
+                                "Player B",
+                                "TESTTESTTEST"
+                            ]
+                        },
+                        {
+                            "building_id": "MERCENARY",
+                            "player_names": [
+                                "Player C",
+                                "TESTTESTTEST"
+                            ]
+                        },
+                        {
+                            "building_id": "REPAIR_C",
+                            "player_names": [
+                                "Player C",
+                                "TEST"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "stage_number": 2,
+                    "time_start": "00:03:00",
+                    "assignments": [
+                        {
+                            "building_id": "IMPERIAL",
+                            "player_names": [
+                                "Player B"
+                            ]
+                        },
+                        {
+                            "building_id": "TRANSIT_STATION",
+                            "player_names": [
+                                "Player A"
+                            ]
+                        }
+                    ],
+                    "notes": "ONLR NOTE TO CHECKKKKK KKKKKK KKKKKKKKKKKKKKKKKKKK K K\nKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK \nKKKKKKKKKKKKKK"
+                },
+                {
+                    "stage_number": 3,
+                    "time_start": "00:04:00",
+                    "assignments": [
+                        {
+                            "building_id": "MUNITION",
+                            "player_names": [
+                                "aaddddwwww",
+                                "asddddaas"
+                            ]
+                        },
+                        {
+                            "building_id": "REPAIR_A",
+                            "player_names": [
+                                "Player A",
+                                "Player B",
+                                "Player C"
+                            ]
+                        },
+                        {
+                            "building_id": "PROTOTYPE_B",
+                            "player_names": [
+                                "TESTTEST",
+                                "TESTTESTTEST",
+                                "assdddd"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "legion_id": "Legion 2",
+            "all_players": [
+                "Player X",
+                "Player Y",
+                "Player Z",
+                "momo",
+                "nox",
+                "rex",
+                "SANAD"
+            ],
+            "stages": [
+                {
+                    "stage_number": 1,
+                    "time_start": "01:00:00",
+                    "assignments": [
+                        {
+                            "building_id": "MUNITION",
+                            "player_names": [
+                                "Player X"
+                            ]
+                        },
+                        {
+                            "building_id": "PROTOTYPE_A",
+                            "player_names": [
+                                "Player Y"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "stage_number": 2,
+                    "assignments": [],
+                    "notes": ""
+                },
+                {
+                    "stage_number": 3,
+                    "assignments": [
+                        {
+                            "building_id": "REPAIR_B",
+                            "player_names": [
+                                "Player Y",
+                                "momo"
+                            ]
+                        },
+                        {
+                            "building_id": "TRANSIT_STATION",
+                            "player_names": [
+                                "Player X",
+                                "Player Z",
+                                "rex"
+                            ]
+                        }
+                    ],
+                    "notes": "must leave refoicment at previous building",
+                    "time_start": "00:03:00"
+                },
+                {
+                    "stage_number": 4,
+                    "assignments": [],
+                    "notes": "مجرد تجربة",
+                    "time_start": "00:10:00"
+                }
+            ]
+        }
+    ]
+}
