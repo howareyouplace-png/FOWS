@@ -3,7 +3,10 @@
 // Autosave-enabled admin UI: any change is persisted immediately via save_data.php
 // and pushed to any open preview window via postMessage.
 // Make sure config.php, save_data.php and foundry_map_data.json exist.
-session_start();
+session_start([
+    'cookie_httponly' => true,
+    'cookie_samesite' => 'Lax'
+]);
 $config = require __DIR__ . '/config.php';
 $dataFile = $config['data_file'];
 $hasPost = $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']);
@@ -94,6 +97,15 @@ $extraBuildingSlots = 8;
 
     /* helper messages */
     .msg-inline { margin-left:10px; color: #2b7cff; font-weight:600; }
+    .msg-error { margin-left:10px; color: crimson; font-weight:600; }
+    
+    /* JSON validation styling */
+    .json-editor { width: 100%; padding: 10px; font-family: monospace; border: 2px solid #ddd; border-radius: 4px; }
+    .json-editor.invalid { border-color: #ff4d4d; background-color: #fff5f5; }
+    .json-editor.valid { border-color: #28a745; background-color: #f0fff4; }
+    .validation-msg { margin-top: 4px; font-size: 13px; min-height: 18px; }
+    .validation-msg.error { color: #ff4d4d; }
+    .validation-msg.success { color: #28a745; }
 
     /* make forms responsive */
     @media (max-width:900px){
@@ -128,6 +140,7 @@ $extraBuildingSlots = 8;
 
       <div style="margin-bottom:10px" class="flex-row">
         <button id="openPreview" type="button" class="btn">Open Preview</button>
+        <button id="testPreview" type="button" class="btn">Test Preview Connection</button>
         <button id="saveAllBtn" type="button" class="btn btn-primary">Save all changes (write file)</button>
         <span id="saveAllMsg" class="msg-inline"></span>
       </div>
@@ -135,6 +148,7 @@ $extraBuildingSlots = 8;
       <h4>Raw JSON editor</h4>
       <form id="rawForm" onsubmit="return false;">
         <textarea id="jsonEditor" class="json-editor" aria-label="Map JSON editor" style="min-height:240px;"><?=htmlspecialchars(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))?></textarea>
+        <div id="jsonValidation" class="validation-msg"></div>
         <div style="margin-top:8px">
           <button id="saveRawBtn" type="button" class="btn btn-primary">Save JSON</button>
           <span id="rawMsg" style="margin-left:12px"></span>
@@ -188,6 +202,22 @@ $extraBuildingSlots = 8;
 
       <h4>Manage Legions & Stages</h4>
       <div id="legionList"></div>
+
+      <hr/>
+
+      <h4>CSV Import/Export</h4>
+      <div style="margin-bottom:10px">
+        <p class="small">Export or import player assignments as CSV. Format: Player Name, Legion ID, Stage Number, Building ID</p>
+        <div class="flex-row" style="margin-bottom:8px">
+          <button id="exportCSVBtn" type="button" class="btn">Export Assignments to CSV</button>
+          <button id="exportPlayersCSVBtn" type="button" class="btn">Export Players to CSV</button>
+        </div>
+        <div class="flex-row">
+          <input type="file" id="importCSVFile" accept=".csv" />
+          <button id="importCSVBtn" type="button" class="btn">Import Assignments from CSV</button>
+          <span id="csvMsg" style="margin-left:12px"></span>
+        </div>
+      </div>
 
       <hr/>
 
@@ -255,6 +285,7 @@ $extraBuildingSlots = 8;
     <script>
       // Admin client script — autosave on actions, push preview updates by postMessage.
       const rawEditor = document.getElementById('jsonEditor');
+      const jsonValidation = document.getElementById('jsonValidation');
       const saveRawBtn = document.getElementById('saveRawBtn');
       const rawMsg = document.getElementById('rawMsg');
       const buildingsForm = document.getElementById('buildingsForm');
@@ -263,6 +294,7 @@ $extraBuildingSlots = 8;
       const saveAllBtn = document.getElementById('saveAllBtn');
       const saveAllMsg = document.getElementById('saveAllMsg');
       const openPreview = document.getElementById('openPreview');
+      const testPreview = document.getElementById('testPreview');
 
       const buildingSelect = document.getElementById('buildingSelect');
       const buildingScale = document.getElementById('buildingScale');
@@ -289,6 +321,47 @@ $extraBuildingSlots = 8;
       let data = <?=json_encode($data, JSON_UNESCAPED_UNICODE)?>;
       let previewWin = null;
       let saveLock = false; // prevent concurrent saves
+      let lastSavedData = JSON.stringify(data); // track changes for autosave guard
+
+      // Validate JSON in editor
+      function validateJSON(str) {
+        try {
+          const parsed = JSON.parse(str);
+          if (!parsed.buildings || !Array.isArray(parsed.buildings)) {
+            return { valid: false, error: 'Missing or invalid buildings array' };
+          }
+          if (!parsed.legion_data || !Array.isArray(parsed.legion_data)) {
+            return { valid: false, error: 'Missing or invalid legion_data array' };
+          }
+          return { valid: true, parsed };
+        } catch (e) {
+          return { valid: false, error: e.message };
+        }
+      }
+
+      // Update JSON validation UI
+      function updateJSONValidation() {
+        const result = validateJSON(rawEditor.value);
+        if (result.valid) {
+          rawEditor.classList.remove('invalid');
+          rawEditor.classList.add('valid');
+          jsonValidation.textContent = '✓ Valid JSON';
+          jsonValidation.className = 'validation-msg success';
+          saveRawBtn.disabled = false;
+        } else {
+          rawEditor.classList.remove('valid');
+          rawEditor.classList.add('invalid');
+          jsonValidation.textContent = '✗ ' + result.error;
+          jsonValidation.className = 'validation-msg error';
+          saveRawBtn.disabled = true;
+        }
+      }
+
+      // Listen for JSON editor changes
+      rawEditor.addEventListener('input', updateJSONValidation);
+      
+      // Initial validation
+      updateJSONValidation();
 
       function sendToPreview(){
         if (!previewWin || previewWin.closed) return;
@@ -301,6 +374,39 @@ $extraBuildingSlots = 8;
         setTimeout(()=> sendToPreview(), 600);
       };
 
+      // Test preview connection
+      testPreview.onclick = () => {
+        if (!previewWin || previewWin.closed) {
+          showTransientMessage(saveAllMsg, 'Preview not open. Click "Open Preview" first.', true, 3000);
+          return;
+        }
+        
+        // Send a ping and wait for response
+        let responded = false;
+        const timeout = setTimeout(() => {
+          if (!responded) {
+            showTransientMessage(saveAllMsg, 'Preview timeout - no response received', true, 3000);
+          }
+        }, 3000);
+        
+        const handleResponse = (ev) => {
+          if (ev.data && ev.data.type === 'preview-pong') {
+            responded = true;
+            clearTimeout(timeout);
+            showTransientMessage(saveAllMsg, '✓ Preview connected successfully!', false, 2500);
+            window.removeEventListener('message', handleResponse);
+          }
+        };
+        
+        window.addEventListener('message', handleResponse);
+        try {
+          previewWin.postMessage({ type: 'preview-ping' }, '*');
+        } catch(e) {
+          clearTimeout(timeout);
+          showTransientMessage(saveAllMsg, 'Preview connection error: ' + e.message, true, 3000);
+        }
+      };
+
       // central save function — writes data to server and notifies preview
       async function saveToServer(payload, { showMsg = true } = {}) {
         if (saveLock) {
@@ -308,6 +414,14 @@ $extraBuildingSlots = 8;
           setTimeout(()=> saveToServer(payload, { showMsg }), 250);
           return;
         }
+        
+        // Guard: only save if data actually changed
+        const currentDataStr = JSON.stringify(payload);
+        if (currentDataStr === lastSavedData) {
+          if (showMsg) showTransientMessage(saveAllMsg, 'No changes to save', false, 1400);
+          return true;
+        }
+        
         saveLock = true;
         try {
           const resp = await fetch('save_data.php', {
@@ -318,17 +432,20 @@ $extraBuildingSlots = 8;
           const j = await resp.json();
           if (j && j.ok) {
             data = payload;
-            if (showMsg) showTransientMessage(saveAllMsg, 'Saved', false, 1400);
+            lastSavedData = currentDataStr;
+            const msg = j.message || 'Saved';
+            const versionInfo = j.version ? ` (v${j.version})` : '';
+            if (showMsg) showTransientMessage(saveAllMsg, msg + versionInfo, false, 1400);
             sendToPreview();
             return true;
           } else {
-            const err = j && j.error ? j.error : 'save failed';
-            if (showMsg) showTransientMessage(saveAllMsg, 'Error: ' + err, true, 2500);
+            const err = j && j.message ? j.message : (j && j.error ? j.error : 'save failed');
+            if (showMsg) showTransientMessage(saveAllMsg, 'Error: ' + err, true, 3500);
             return false;
           }
         } catch (e) {
           console.warn('save failed', e);
-          if (showMsg) showTransientMessage(saveAllMsg, 'Save error', true, 2500);
+          if (showMsg) showTransientMessage(saveAllMsg, 'Save error: ' + e.message, true, 3500);
           return false;
         } finally {
           saveLock = false;
@@ -606,14 +723,22 @@ $extraBuildingSlots = 8;
 
       // Save raw JSON explicitly
       saveRawBtn.onclick = async () => {
+        const validation = validateJSON(rawEditor.value);
+        if (!validation.valid) {
+          rawMsg.textContent = 'Cannot save: ' + validation.error;
+          rawMsg.style.color = 'crimson';
+          setTimeout(()=> { rawMsg.textContent = ''; rawMsg.style.color = ''; }, 3000);
+          return;
+        }
         try {
-          const parsed = JSON.parse(rawEditor.value);
+          const parsed = validation.parsed;
           await saveToServer(parsed, { showMsg:true });
           renderLegions();
           populateBuildingSelect();
         } catch (err) {
-          rawMsg.textContent = 'Invalid JSON: ' + err.message;
-          setTimeout(()=> rawMsg.textContent = '', 3000);
+          rawMsg.textContent = 'Error: ' + err.message;
+          rawMsg.style.color = 'crimson';
+          setTimeout(()=> { rawMsg.textContent = ''; rawMsg.style.color = ''; }, 3000);
         }
       };
 
@@ -660,14 +785,22 @@ $extraBuildingSlots = 8;
       };
 
       saveAllBtn.onclick = async () => {
+        const validation = validateJSON(rawEditor.value);
+        if (!validation.valid) {
+          saveAllMsg.textContent = 'Cannot save: ' + validation.error;
+          saveAllMsg.style.color = 'crimson';
+          setTimeout(()=> { saveAllMsg.textContent = ''; saveAllMsg.style.color = ''; }, 3000);
+          return;
+        }
         try {
-          const parsed = JSON.parse(rawEditor.value);
+          const parsed = validation.parsed;
           await saveToServer(parsed, { showMsg:true });
           renderLegions();
           populateBuildingSelect();
         } catch (err) {
-          saveAllMsg.textContent = 'Invalid JSON: ' + err.message;
-          setTimeout(()=> saveAllMsg.textContent = '', 2200);
+          saveAllMsg.textContent = 'Error: ' + err.message;
+          saveAllMsg.style.color = 'crimson';
+          setTimeout(()=> { saveAllMsg.textContent = ''; saveAllMsg.style.color = ''; }, 3000);
         }
       };
 
@@ -700,14 +833,13 @@ $extraBuildingSlots = 8;
         showTransientMessage(buildingsMsg, 'Visual saved', false, 1400);
       };
 
-      // live parsing input -> push preview while typing (non-destructive)
+      // live parsing input -> update UI while typing (non-destructive, no auto-save)
       rawEditor.addEventListener('input', () => {
+        updateJSONValidation();
         try {
           const parsed = JSON.parse(rawEditor.value);
-          data = parsed;
-          populateBuildingSelect();
-          renderLegions();
-          sendToPreview();
+          // Don't update data or send to preview while typing
+          // Only visual feedback for validation
         } catch (e) { /* ignore until valid JSON */ }
       });
 
@@ -718,8 +850,137 @@ $extraBuildingSlots = 8;
       // Accept preview handshake
       window.addEventListener('message', ev => {
         const msg = ev.data || {};
-        if (msg.type === 'preview-ready') sendToPreview();
+        if (msg.type === 'preview-ready') {
+          sendToPreview();
+        } else if (msg.type === 'preview-pong') {
+          // Handled by testPreview click handler
+        }
       });
+
+      // CSV Export/Import functionality
+      document.getElementById('exportCSVBtn').onclick = () => {
+        const rows = [['Player Name', 'Legion ID', 'Stage Number', 'Building ID']];
+        
+        (data.legion_data || []).forEach(legion => {
+          (legion.stages || []).forEach(stage => {
+            (stage.assignments || []).forEach(assignment => {
+              (assignment.player_names || []).forEach(playerName => {
+                rows.push([
+                  playerName,
+                  legion.legion_id,
+                  stage.stage_number,
+                  assignment.building_id
+                ]);
+              });
+            });
+          });
+        });
+        
+        const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'foundry_assignments_' + new Date().toISOString().slice(0,10) + '.csv';
+        link.click();
+        showTransientMessage(document.getElementById('csvMsg'), 'CSV exported', false, 2000);
+      };
+
+      document.getElementById('exportPlayersCSVBtn').onclick = () => {
+        const rows = [['Legion ID', 'Player Name']];
+        
+        (data.legion_data || []).forEach(legion => {
+          (legion.all_players || []).forEach(playerName => {
+            rows.push([legion.legion_id, playerName]);
+          });
+        });
+        
+        const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'foundry_players_' + new Date().toISOString().slice(0,10) + '.csv';
+        link.click();
+        showTransientMessage(document.getElementById('csvMsg'), 'Players CSV exported', false, 2000);
+      };
+
+      document.getElementById('importCSVBtn').onclick = () => {
+        const fileInput = document.getElementById('importCSVFile');
+        const file = fileInput.files[0];
+        if (!file) {
+          showTransientMessage(document.getElementById('csvMsg'), 'Please select a CSV file', true, 2000);
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const csv = e.target.result;
+            const lines = csv.split('\n').map(line => {
+              // Simple CSV parser (handles quoted fields)
+              const regex = /("([^"]|"")*"|[^,]+|(?<=,)(?=,)|(?<=^)(?=,)|(?<=,)(?=$))/g;
+              return (line.match(regex) || []).map(cell => cell.replace(/^"|"$/g, '').replace(/""/g, '"'));
+            }).filter(line => line.length > 0);
+            
+            if (lines.length < 2) {
+              showTransientMessage(document.getElementById('csvMsg'), 'CSV file is empty or invalid', true, 2500);
+              return;
+            }
+            
+            // Skip header row
+            const dataRows = lines.slice(1);
+            let importCount = 0;
+            
+            dataRows.forEach(row => {
+              if (row.length < 4) return;
+              const [playerName, legionId, stageNumber, buildingId] = row.map(s => String(s).trim());
+              if (!playerName || !legionId || !stageNumber || !buildingId) return;
+              
+              // Find or create legion
+              let legion = data.legion_data.find(l => l.legion_id === legionId);
+              if (!legion) {
+                legion = { legion_id: legionId, all_players: [], stages: [] };
+                data.legion_data.push(legion);
+              }
+              
+              // Add player if not exists
+              if (!legion.all_players.includes(playerName)) {
+                legion.all_players.push(playerName);
+              }
+              
+              // Find or create stage
+              const stageNum = parseInt(stageNumber, 10);
+              let stage = legion.stages.find(s => s.stage_number === stageNum);
+              if (!stage) {
+                stage = { stage_number: stageNum, assignments: [], notes: '' };
+                legion.stages.push(stage);
+              }
+              
+              // Find or create assignment
+              let assignment = stage.assignments.find(a => a.building_id === buildingId);
+              if (!assignment) {
+                assignment = { building_id: buildingId, player_names: [] };
+                stage.assignments.push(assignment);
+              }
+              
+              // Add player to assignment if not already there
+              if (!assignment.player_names.includes(playerName)) {
+                assignment.player_names.push(playerName);
+                importCount++;
+              }
+            });
+            
+            updateDataAndSave(data);
+            renderLegions();
+            rawEditor.value = JSON.stringify(data, null, 2);
+            updateJSONValidation();
+            showTransientMessage(document.getElementById('csvMsg'), `Imported ${importCount} assignments`, false, 2500);
+            fileInput.value = '';
+          } catch (err) {
+            showTransientMessage(document.getElementById('csvMsg'), 'Import error: ' + err.message, true, 3000);
+          }
+        };
+        reader.readAsText(file);
+      };
     </script>
 
     <!-- Include mobile-only JS after admin script so mobile behavior is added only on small screens -->

@@ -530,6 +530,51 @@ function updatePlayersPanel(){
   title.style.textAlign = 'center';
   playersPanel.appendChild(title);
 
+  // Add building filter dropdown
+  const filterRow = document.createElement('div');
+  filterRow.style.padding = '6px';
+  filterRow.style.borderBottom = '1px solid rgba(0,0,0,0.08)';
+  
+  const filterLabel = document.createElement('label');
+  filterLabel.textContent = 'Filter by building: ';
+  filterLabel.style.fontSize = '11px';
+  filterLabel.style.color = '#666';
+  
+  const filterSelect = document.createElement('select');
+  filterSelect.style.fontSize = '11px';
+  filterSelect.style.padding = '2px 4px';
+  filterSelect.style.marginLeft = '4px';
+  filterSelect.style.width = 'calc(100% - 4px)';
+  filterSelect.style.marginTop = '4px';
+  
+  const allOption = document.createElement('option');
+  allOption.value = '';
+  allOption.textContent = '-- Show all players --';
+  filterSelect.appendChild(allOption);
+  
+  // Get current stage assignments to show relevant buildings
+  const stage = (lg.stages || []).find(s => s.stage_number === currentStageNumber);
+  const assignedBuildings = new Set();
+  if (stage) {
+    (stage.assignments || []).forEach(a => {
+      if (a.building_id) assignedBuildings.add(a.building_id);
+    });
+  }
+  
+  // Add building options
+  (mapData.buildings || []).forEach(b => {
+    if (assignedBuildings.has(b.id)) {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.textContent = `${b.id}${b.name_ar ? ' - ' + b.name_ar : ''}`;
+      filterSelect.appendChild(opt);
+    }
+  });
+  
+  filterRow.appendChild(filterLabel);
+  filterRow.appendChild(filterSelect);
+  playersPanel.appendChild(filterRow);
+
   const players = lg.all_players || [];
   if (!players.length){
     const none = document.createElement('div');
@@ -540,41 +585,94 @@ function updatePlayersPanel(){
     return;
   }
 
-  players.forEach(p => {
-    const row = document.createElement('div');
-    row.className = 'players-row';
-    row.style.display = 'flex';
-    row.style.alignItems = 'center';
-    row.style.justifyContent = 'space-between';
-    row.style.padding = '6px';
-    row.style.borderBottom = '1px dashed rgba(0,0,0,0.06)';
+  // Container for player rows (will be filtered)
+  const playersContainer = document.createElement('div');
+  playersContainer.id = 'playersContainer';
+  
+  const renderPlayers = (filterBuildingId = '') => {
+    playersContainer.innerHTML = '';
+    
+    // Get players assigned to the selected building
+    let visiblePlayers = players;
+    if (filterBuildingId && stage) {
+      const assignment = stage.assignments?.find(a => a.building_id === filterBuildingId);
+      if (assignment) {
+        visiblePlayers = players.filter(p => assignment.player_names?.includes(p));
+      } else {
+        visiblePlayers = [];
+      }
+    }
+    
+    if (visiblePlayers.length === 0 && filterBuildingId) {
+      const noMatch = document.createElement('div');
+      noMatch.textContent = 'No players assigned to this building';
+      noMatch.style.padding = '8px';
+      noMatch.style.fontSize = '12px';
+      noMatch.style.color = '#666';
+      noMatch.style.fontStyle = 'italic';
+      playersContainer.appendChild(noMatch);
+      scheduleDrawConnectors();
+      return;
+    }
+    
+    visiblePlayers.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'players-row';
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.justifyContent = 'space-between';
+      row.style.padding = '6px';
+      row.style.borderBottom = '1px dashed rgba(0,0,0,0.06)';
 
-    const nameEl = document.createElement('div');
-    nameEl.className = 'pname';
-    nameEl.textContent = p;
-    nameEl.style.flex = '1';
-    nameEl.style.marginRight = '8px';
-    nameEl.style.fontSize = '13px';
-    nameEl.style.wordBreak = 'break-word';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'pname';
+      nameEl.textContent = p;
+      nameEl.style.flex = '1';
+      nameEl.style.marginRight = '8px';
+      nameEl.style.fontSize = '13px';
+      nameEl.style.wordBreak = 'break-word';
 
-    const btn = document.createElement('button');
-    btn.className = 'btn';
-    btn.textContent = 'Jump';
-    btn.addEventListener('click', ()=> highlightPlayerAssignments(p));
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.textContent = 'Jump';
+      btn.addEventListener('click', ()=> highlightPlayerAssignments(p));
 
-    // enable drag from panel rows to buildings
-    row.setAttribute('draggable', 'true');
-    row.addEventListener('dragstart', (ev) => {
-      try {
-        ev.dataTransfer.setData('text/plain', JSON.stringify({ type: 'player-assign', player: p }));
-      } catch (e) {}
+      // enable drag from panel rows to buildings
+      row.setAttribute('draggable', 'true');
+      row.addEventListener('dragstart', (ev) => {
+        try {
+          ev.dataTransfer.setData('text/plain', JSON.stringify({ type: 'player-assign', player: p }));
+        } catch (e) {}
+      });
+
+      row.appendChild(nameEl);
+      row.appendChild(btn);
+      playersContainer.appendChild(row);
     });
-
-    row.appendChild(nameEl);
-    row.appendChild(btn);
-    playersPanel.appendChild(row);
+    
+    scheduleDrawConnectors();
+  };
+  
+  // Initial render
+  renderPlayers();
+  
+  // Filter event
+  filterSelect.addEventListener('change', () => {
+    const buildingId = filterSelect.value;
+    renderPlayers(buildingId);
+    
+    // Highlight the selected building if one is chosen
+    if (buildingId) {
+      document.querySelectorAll('.building').forEach(b => b.classList.remove('highlighted'));
+      const buildingEl = Array.from(document.querySelectorAll('.building')).find(b => b.dataset.buildingId === buildingId);
+      if (buildingEl) {
+        buildingEl.classList.add('highlighted');
+        setTimeout(() => buildingEl.classList.remove('highlighted'), 3000);
+      }
+    }
   });
-
+  
+  playersPanel.appendChild(playersContainer);
   playersPanel.style.display = playersPanelVisible ? 'block' : 'none';
   scheduleDrawConnectors();
 }
@@ -625,6 +723,7 @@ function drawConnectorsForCurrentStage(){
     rect.setAttribute('fill', 'rgba(255,255,255,0.02)');
     rect.setAttribute('stroke', '#999');
     rect.setAttribute('stroke-width', '1.2');
+    rect.setAttribute('opacity', '0.4');
     connectorsSvg.appendChild(rect);
 
     const panelRect = playersPanel.getBoundingClientRect();
@@ -645,32 +744,44 @@ function drawConnectorsForCurrentStage(){
       const idx = instanceIndex++;
       const spread = Math.min(14, 6 + Math.floor(total/3));
       const offset = (idx - (total-1)/2) * spread;
-      const midX = (sx + bx) / 2;
-      const controlY1 = sy + offset * 0.6;
-      const controlY2 = by + offset * 0.6;
-      const d = `M ${sx} ${sy} C ${midX} ${controlY1} ${midX} ${controlY2} ${bx} ${by}`;
+      
+      // Improved curve smoothing with better control points
+      const dx = bx - sx;
+      const dy = by - sy;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const smoothness = Math.min(0.5, dist / 500); // Adaptive smoothness
+      
+      const midX1 = sx + dx * smoothness;
+      const midX2 = bx - dx * smoothness;
+      const controlY1 = sy + offset * 0.4;
+      const controlY2 = by + offset * 0.4;
+      
+      const d = `M ${sx} ${sy} C ${midX1} ${controlY1}, ${midX2} ${controlY2}, ${bx} ${by}`;
 
       const path = document.createElementNS('http://www.w3.org/2000/svg','path');
       path.setAttribute('d', d);
       path.setAttribute('stroke', color);
       path.setAttribute('fill', 'none');
-      path.setAttribute('stroke-width', String(2.6));
+      path.setAttribute('stroke-width', String(2.2));
       path.setAttribute('stroke-linecap', 'round');
       path.setAttribute('stroke-linejoin', 'round');
+      path.setAttribute('opacity', '0.6'); // Reduced opacity for less visual clutter
       connectorsSvg.appendChild(path);
 
       const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
       circle.setAttribute('cx', bx);
       circle.setAttribute('cy', by);
-      circle.setAttribute('r', String(4.4));
+      circle.setAttribute('r', String(4.0));
       circle.setAttribute('fill', color);
+      circle.setAttribute('opacity', '0.8');
       connectorsSvg.appendChild(circle);
 
       const anchor = document.createElementNS('http://www.w3.org/2000/svg','circle');
       anchor.setAttribute('cx', sx);
       anchor.setAttribute('cy', sy);
-      anchor.setAttribute('r', String(2.8));
+      anchor.setAttribute('r', String(2.5));
       anchor.setAttribute('fill', color);
+      anchor.setAttribute('opacity', '0.7');
       connectorsSvg.appendChild(anchor);
     });
   });
@@ -837,6 +948,10 @@ function buildMap(){
           autoSaveToServer();
           updatePlayersPanel();
           scheduleDrawConnectors();
+          
+          // Show toast confirmation
+          const buildingName = meta.name_ar || id;
+          showToast(`✓ ${obj.player} assigned to ${buildingName}`, 2000, 'success');
         }
       } catch (e) {
         console.warn('drop parse failed', e);
@@ -854,6 +969,52 @@ function buildMap(){
     });
     docClickHandlerAdded = true;
   }
+}
+
+/* ========================
+   TOAST NOTIFICATIONS
+   ======================== */
+function showToast(message, duration = 2500, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 100000;
+    animation: slideInUp 0.3s ease-out;
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideOutDown 0.3s ease-in';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// Add CSS animations for toast
+if (!document.getElementById('toast-animations')) {
+  const style = document.createElement('style');
+  style.id = 'toast-animations';
+  style.textContent = `
+    @keyframes slideInUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes slideOutDown {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 /* ========================
@@ -1177,3 +1338,55 @@ document.addEventListener('DOMContentLoaded', ()=> {
     console.error('Map init failed', err);
   }
 });
+
+/* ========================
+   POSTMESSAGE HANDLERS
+   ======================== */
+// Listen for messages from admin window
+window.addEventListener('message', (ev) => {
+  const msg = ev.data || {};
+  
+  // Handle ping from admin (for connection testing)
+  if (msg.type === 'preview-ping') {
+    try {
+      ev.source.postMessage({ type: 'preview-pong' }, '*');
+    } catch(e) {
+      console.warn('Failed to send pong', e);
+    }
+    return;
+  }
+  
+  // Handle data updates from admin
+  if (msg.type === 'update-data' && msg.payload) {
+    try {
+      mapData = msg.payload;
+      window.mapData = mapData;
+      console.info('Received data update via postMessage');
+      computeClipFromGridSize();
+      computeLayout();
+      buildMap();
+      positionBuildings();
+      renderGrid(showGrid);
+      buildControls();
+      updatePlayersPanel();
+      updateMapForCurrent();
+      try {
+        if (window.ModernControls && typeof window.ModernControls.refresh === 'function') {
+          window.ModernControls.refresh();
+        }
+      } catch(e) {}
+    } catch(err) {
+      console.warn('Failed to process update-data message', err);
+    }
+    return;
+  }
+});
+
+// Notify admin window that preview is ready
+if (window.opener) {
+  try {
+    window.opener.postMessage({ type: 'preview-ready' }, '*');
+  } catch(e) {
+    console.warn('Failed to notify admin window', e);
+  }
+}
