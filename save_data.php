@@ -107,7 +107,7 @@ if (is_dir($historyDir) && is_writable($historyDir)) {
 }
 
 // Safe write with flock to prevent concurrent writes
-$tmp = $dataFile . '.tmp.' . getmypid();
+$tmp = $dataFile . '.tmp.' . bin2hex(random_bytes(8));
 $fp = fopen($tmp, 'w');
 if ($fp === false) {
     http_response_code(500);

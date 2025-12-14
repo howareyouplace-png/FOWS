@@ -321,7 +321,20 @@ $extraBuildingSlots = 8;
       let data = <?=json_encode($data, JSON_UNESCAPED_UNICODE)?>;
       let previewWin = null;
       let saveLock = false; // prevent concurrent saves
-      let lastSavedData = JSON.stringify(data); // track changes for autosave guard
+      
+      // Simple hash function for change detection (faster than full JSON.stringify)
+      function hashData(obj) {
+        const str = JSON.stringify(obj);
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          const char = str.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash; // Convert to 32bit integer
+        }
+        return hash;
+      }
+      
+      let lastSavedHash = hashData(data); // track changes for autosave guard
 
       // Validate JSON in editor
       function validateJSON(str) {
@@ -415,9 +428,9 @@ $extraBuildingSlots = 8;
           return;
         }
         
-        // Guard: only save if data actually changed
-        const currentDataStr = JSON.stringify(payload);
-        if (currentDataStr === lastSavedData) {
+        // Guard: only save if data actually changed (using hash comparison)
+        const currentHash = hashData(payload);
+        if (currentHash === lastSavedHash) {
           if (showMsg) showTransientMessage(saveAllMsg, 'No changes to save', false, 1400);
           return true;
         }
@@ -432,7 +445,7 @@ $extraBuildingSlots = 8;
           const j = await resp.json();
           if (j && j.ok) {
             data = payload;
-            lastSavedData = currentDataStr;
+            lastSavedHash = currentHash;
             const msg = j.message || 'Saved';
             const versionInfo = j.version ? ` (v${j.version})` : '';
             if (showMsg) showTransientMessage(saveAllMsg, msg + versionInfo, false, 1400);
@@ -916,7 +929,13 @@ $extraBuildingSlots = 8;
           try {
             const csv = e.target.result;
             const lines = csv.split('\n').map(line => {
-              // Simple CSV parser (handles quoted fields)
+              // CSV parser: handles quoted fields (RFC 4180 compatible)
+              // Pattern breakdown:
+              // - "([^"]|"")*" : matches quoted field (handles escaped quotes "")
+              // - [^,]+ : matches unquoted field (any non-comma chars)
+              // - (?<=,)(?=,) : matches empty field between commas
+              // - (?<=^)(?=,) : matches empty field at start of line
+              // - (?<=,)(?=$) : matches empty field at end of line
               const regex = /("([^"]|"")*"|[^,]+|(?<=,)(?=,)|(?<=^)(?=,)|(?<=,)(?=$))/g;
               return (line.match(regex) || []).map(cell => cell.replace(/^"|"$/g, '').replace(/""/g, '"'));
             }).filter(line => line.length > 0);

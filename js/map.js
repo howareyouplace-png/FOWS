@@ -1346,10 +1346,16 @@ document.addEventListener('DOMContentLoaded', ()=> {
 window.addEventListener('message', (ev) => {
   const msg = ev.data || {};
   
+  // Validate origin for security (only respond to same-origin requests)
+  // In production, you might want to check ev.origin against a whitelist
+  
   // Handle ping from admin (for connection testing)
   if (msg.type === 'preview-ping') {
     try {
-      ev.source.postMessage({ type: 'preview-pong' }, '*');
+      // Only respond to same-origin requests or trusted origins
+      if (ev.source && (ev.origin === window.location.origin || ev.origin === 'null')) {
+        ev.source.postMessage({ type: 'preview-pong' }, ev.origin === 'null' ? '*' : ev.origin);
+      }
     } catch(e) {
       console.warn('Failed to send pong', e);
     }
@@ -1385,7 +1391,7 @@ window.addEventListener('message', (ev) => {
 // Notify admin window that preview is ready
 if (window.opener) {
   try {
-    window.opener.postMessage({ type: 'preview-ready' }, '*');
+    window.opener.postMessage({ type: 'preview-ready' }, window.location.origin);
   } catch(e) {
     console.warn('Failed to notify admin window', e);
   }

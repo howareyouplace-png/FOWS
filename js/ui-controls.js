@@ -339,8 +339,8 @@
         return;
       }
       
-      // Enable polling
-      window.enablePollingSafely(true, 3000); // 3 second interval
+      // Enable polling with conservative 5 second interval to reduce server load
+      window.enablePollingSafely(true, 5000);
       pollingBtn.disabled = true;
       pollingBtn.textContent = '📡 Auto-refresh ON';
       pollingBtn.style.opacity = '0.7';
