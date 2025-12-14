@@ -57,11 +57,13 @@
     const right = document.createElement('div'); right.className = 'controls-right';
     function btn(txt, title){ const b=document.createElement('button'); b.type='button'; b.className='modern-btn'; b.textContent = txt; if (title) b.title = title; return b; }
     const prev = btn('◀','Previous'); const next = btn('▶','Next'); const refresh = btn('⟳','Reload'); const toggle = btn('⛶','Toggle grid');
-    right.appendChild(prev); right.appendChild(next); right.appendChild(refresh); right.appendChild(toggle);
+    const pollingBtn = btn('📡','Enable auto-refresh (5 min)'); pollingBtn.id = 'pollingEnableBtn';
+    pollingBtn.style.display = 'none'; // Hidden by default, shown on mobile or when polling is off
+    right.appendChild(prev); right.appendChild(next); right.appendChild(refresh); right.appendChild(toggle); right.appendChild(pollingBtn);
 
     container.appendChild(left); container.appendChild(center); container.appendChild(right);
 
-    return { container, select, stagesWrap, range, rangeLbl, rightButtons: right.querySelectorAll('.modern-btn'), prev, next, refresh, toggle };
+    return { container, select, stagesWrap, range, rangeLbl, rightButtons: right.querySelectorAll('.modern-btn'), prev, next, refresh, toggle, pollingBtn };
   }
 
   // Accessors for external map data & indices
@@ -318,6 +320,42 @@
     });
     refreshBtn && refreshBtn.addEventListener('click', ()=> { if (typeof loadData === 'function') loadData(); if (window.ModernControls && ModernControls.refresh) ModernControls.refresh(); });
     toggleBtn && toggleBtn.addEventListener('click', ()=> { try { window.showGrid = !window.showGrid; if (typeof renderGrid === 'function') renderGrid(window.showGrid); } catch(e){} });
+    
+    // Polling enable button (temporary 5 min enable)
+    const pollingBtn = modernControls.pollingBtn;
+    let pollingTimeout = null;
+    
+    // Show polling button on mobile or when polling is disabled
+    try {
+      if ((window.matchMedia && window.matchMedia('(max-width:900px)').matches) || 
+          (typeof CONFIG !== 'undefined' && !CONFIG.POLL_ENABLED && !window.MAP_FORCE_POLL)) {
+        pollingBtn.style.display = '';
+      }
+    } catch(e) {}
+    
+    pollingBtn && pollingBtn.addEventListener('click', () => {
+      if (typeof window.enablePollingSafely !== 'function') {
+        console.warn('enablePollingSafely not available');
+        return;
+      }
+      
+      // Enable polling with conservative 5 second interval to reduce server load
+      window.enablePollingSafely(true, 5000);
+      pollingBtn.disabled = true;
+      pollingBtn.textContent = '📡 Auto-refresh ON';
+      pollingBtn.style.opacity = '0.7';
+      
+      // Auto-disable after 5 minutes
+      if (pollingTimeout) clearTimeout(pollingTimeout);
+      pollingTimeout = setTimeout(() => {
+        window.enablePollingSafely(false);
+        pollingBtn.disabled = false;
+        pollingBtn.textContent = '📡';
+        pollingBtn.title = 'Enable auto-refresh (5 min)';
+        pollingBtn.style.opacity = '1';
+        console.info('[ui-controls] Auto-refresh disabled after 5 minutes');
+      }, 5 * 60 * 1000); // 5 minutes
+    });
 
     // legacy wiring
     if (legacyRefresh) legacyRefresh.addEventListener('click', ()=> { if (typeof loadData === 'function') loadData(); });
