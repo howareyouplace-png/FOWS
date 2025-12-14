@@ -445,6 +445,11 @@
       seg.style.flex = `0 0 ${PREF_SEG_W}px`;
       seg.style.minWidth = MIN_SEG_W + 'px';
       seg.style.maxWidth = MAX_SEG_W + 'px';
+      
+      // Add title tooltip with full player list for mobile long-press
+      if (team.building_name && Array.isArray(team.players) && team.players.length > 0) {
+        seg.title = `${team.building_name}\n${team.players.join('\n')}`;
+      }
 
       const title = document.createElement('div');
       title.className = 'team-title';
@@ -463,7 +468,6 @@
         const e = document.createElement('div');
         e.className = 'team-player-name';
         e.textContent = pn;
-        Object.assign(e.style, { padding:'4px 8px', borderRadius:'8px', background:'rgba(0,0,0,0.03)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', width:'calc(100% - 8px)', textAlign:'center' });
         playersWrap.appendChild(e);
       });
       if (team.players.length > visible.length){
